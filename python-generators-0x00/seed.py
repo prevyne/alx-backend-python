@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 """
 This script sets up and seeds the ALX_prodev database.
-It generates a unique user_id for each record from the CSV.
+It generates a unique user_id for each record from the CSV and includes
+a workaround for the 'caching_sha2_password' authentication issue.
 """
 import mysql.connector
 import csv
@@ -20,7 +21,10 @@ DB_NAME = 'ALX_prodev'
 def connect_db():
     """Connects to the MySQL database server."""
     try:
-        connection = mysql.connector.connect(**DB_CONFIG)
+        config = DB_CONFIG.copy()
+        # Add auth_plugin to handle authentication issues
+        config['auth_plugin'] = 'mysql_native_password'
+        connection = mysql.connector.connect(**config)
         return connection
     except mysql.connector.Error as err:
         print(f"Error connecting to MySQL: {err}")
@@ -43,6 +47,8 @@ def connect_to_prodev():
     try:
         config = DB_CONFIG.copy()
         config['database'] = DB_NAME
+        # Add auth_plugin to handle authentication issues
+        config['auth_plugin'] = 'mysql_native_password'
         connection = mysql.connector.connect(**config)
         return connection
     except mysql.connector.Error as err:
@@ -64,7 +70,6 @@ def create_table(connection):
         );
         """
         cursor.execute(create_table_query)
-        # Add index for potential performance improvement on lookups
         cursor.execute("ALTER TABLE user_data ADD INDEX (user_id);")
         print("Table 'user_data' created or already exists.")
         cursor.close()
@@ -82,18 +87,15 @@ def insert_data(connection, data_file):
 
     cursor = connection.cursor()
     try:
-        # Check if the table is empty before inserting
         cursor.execute("SELECT COUNT(*) FROM user_data")
         if cursor.fetchone()[0] > 0:
             print("Data already exists in 'user_data'. Skipping insertion.")
             return
 
-        # Read data from CSV and insert
         with open(data_file, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             insert_query = "INSERT INTO user_data (user_id, name, email, age) VALUES (%s, %s, %s, %s)"
             
-            # Generate a UUID for each row as it's being read
             data_to_insert = [
                 (str(uuid.uuid4()), row['name'], row['email'], row['age'])
                 for row in reader
