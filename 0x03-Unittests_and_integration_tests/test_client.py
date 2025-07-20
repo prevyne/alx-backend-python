@@ -32,7 +32,8 @@ class TestGithubOrgClient(unittest.TestCase):
 
     def test_public_repos_url(self) -> None:
         """Tests the `_public_repos_url` property."""
-        known_payload = {"repos_url": "https://api.github.com/orgs/google/repos"}
+        known_payload = {"repos_url": 
+            "https://api.github.com/orgs/google/repos"}
         with patch.object(
             GithubOrgClient,
             'org',
@@ -93,7 +94,8 @@ class TestGithubOrgClient(unittest.TestCase):
     }
 ])
 class TestIntegrationGithubOrgClient(unittest.TestCase):
-    """Integration tests for the `GithubOrgClient` class using fixtures."""
+    """Integration tests for the `GithubOrgClient` 
+    class using fixtures."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -102,7 +104,8 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         mock_get = cls.get_patcher.start()
 
         def side_effect(url: str) -> Mock:
-            """Side effect function for the mock to return different payloads."""
+            """Side effect function for the mock 
+            to return different payloads."""
             mock_response = Mock()
             if url == "https://api.github.com/orgs/google":
                 mock_response.json.return_value = cls.org_payload
