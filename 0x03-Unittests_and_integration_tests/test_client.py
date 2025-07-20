@@ -129,3 +129,59 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             client.public_repos(license="apache-2.0"),
             self.apache2_repos
         )
+
+
+@parameterized_class([
+    {
+        'org_payload': TEST_PAYLOAD[0][0],
+        'repos_payload': TEST_PAYLOAD[0][1],
+        'expected_repos': TEST_PAYLOAD[0][2],
+        'apache2_repos': TEST_PAYLOAD[0][3],
+    }
+])
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """Integration tests for the `GithubOrgClient` class using fixtures."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Set up class method to mock `requests.get`."""
+        cls.get_patcher = patch('requests.get')
+        mock_get = cls.get_patcher.start()
+
+        def side_effect(url: str) -> Mock:
+            """Side effect function for the mock to return different payloads."""
+            mock_response = Mock()
+            if url == "https://api.github.com/orgs/google":
+                mock_response.json.return_value = cls.org_payload
+            elif url == "https://api.github.com/orgs/google/repos":
+                mock_response.json.return_value = cls.repos_payload
+            else:
+                mock_response.status_code = 404
+            return mock_response
+
+        mock_get.side_effect = side_effect
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """Tear down class method to stop the patcher."""
+        cls.get_patcher.stop()
+
+    def test_public_repos(self) -> None:
+        """
+        Tests the `public_repos` method without a license filter,
+        ensuring it returns the expected repositories based on the fixtures.
+        """
+        client = GithubOrgClient("google")
+        self.assertEqual(client.public_repos(), self.expected_repos)
+
+    def test_public_repos_with_license(self) -> None:
+        """
+        Tests the `public_repos` method with a license filter,
+        ensuring it returns only repositories with the specified license.
+        """
+        client = GithubOrgClient("google")
+        self.assertEqual(
+            client.public_repos(license="apache-2.0"),
+            self.apache2_repos
+        )
+        
