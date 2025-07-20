@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import User, Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
+from django.shortcuts import get_object_or_404
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
@@ -15,24 +16,26 @@ class ConversationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_authenticated:
             return user.conversations.all().prefetch_related('participants', 'messages')
-        return Conversation.objects.none() # Or handle unauthenticated access as needed
+        return Conversation.objects.none()
 
 class MessageViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows messages to be viewed or sent.
+    API endpoint for messages within a specific conversation.
+    Accessed via /conversations/{conversation_pk}/messages/
     """
-    queryset = Message.objects.all()
     serializer_class = MessageSerializer
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the messages for
+        the conversation as determined by the conversation_pk portion of the URL.
+        """
+        return Message.objects.filter(conversation=self.kwargs['conversation_pk'])
 
     def perform_create(self, serializer):
         """
-        Sets the sender of the message to the currently logged-in user.
+        Associates the message with the conversation from the URL
+        and sets the sender to the currently logged-in user.
         """
-        # Ensure the conversation exists before saving the message
-        conversation_id = self.request.data.get('conversation')
-        try:
-            conversation = Conversation.objects.get(id=conversation_id)
-        except Conversation.DoesNotExist:
-            raise serializers.ValidationError("Conversation not found.")
-            
+        conversation = get_object_or_404(Conversation, pk=self.kwargs['conversation_pk'])
         serializer.save(sender=self.request.user, conversation=conversation)
