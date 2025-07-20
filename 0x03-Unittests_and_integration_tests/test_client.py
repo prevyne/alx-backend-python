@@ -32,8 +32,8 @@ class TestGithubOrgClient(unittest.TestCase):
 
     def test_public_repos_url(self) -> None:
         """Tests the `_public_repos_url` property."""
-        known_payload = {"repos_url": 
-                            "https://api.github.com/orgs/google/repos"}
+        known_payload = {"repos_url":
+                        "https://api.github.com/orgs/google/repos"}
         with patch.object(
             GithubOrgClient,
             'org',
