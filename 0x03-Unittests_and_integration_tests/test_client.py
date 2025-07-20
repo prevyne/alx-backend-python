@@ -72,8 +72,8 @@ class TestGithubOrgClient(unittest.TestCase):
         ({"license": {"key": "my_license"}}, "my_license", True),
         ({"license": {"key": "other_license"}}, "my_license", False),
     ])
-    def test_has_license(self, repo: Dict,license_key: str, expected: bool
-    ) -> None:
+    def test_has_license(self, repo: Dict, license_key: str, expected: bool
+                         ) -> None:
         """Tests the `has_license` static method."""
         self.assertEqual(
             GithubOrgClient.has_license(repo, license_key),
@@ -149,7 +149,8 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         mock_get = cls.get_patcher.start()
 
         def side_effect(url: str) -> Mock:
-            """Side effect function for the mock to return different payloads."""
+            """Side effect function for the mock to
+            return different payloads."""
             mock_response = Mock()
             if url == "https://api.github.com/orgs/google":
                 mock_response.json.return_value = cls.org_payload
@@ -184,4 +185,3 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             client.public_repos(license="apache-2.0"),
             self.apache2_repos
         )
-        
