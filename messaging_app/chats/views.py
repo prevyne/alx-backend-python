@@ -1,12 +1,13 @@
-from rest_framework import viewsets, status # Import status
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied # Import PermissionDenied
+from rest_framework.exceptions import PermissionDenied
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from django.shortcuts import get_object_or_404
 from .permissions import IsParticipantOfConversation
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import MessageFilter
+from .pagination import CustomMessagePagination
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -29,17 +30,16 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [DjangoFilterBackend]
     filterset_class = MessageFilter
+    pagination_class = CustomMessagePagination
 
     def get_queryset(self):
         """
         This view returns a list of all messages for the conversation
         as determined by the conversation_id portion of the URL.
         """
-        # Rename variable from 'conversation_pk' to 'conversation_id'
         conversation_id = self.kwargs['conversation_id']
         conversation = get_object_or_404(Conversation, pk=conversation_id)
 
-        # Explicitly check if the user is a participant and raise a 403 error if not
         if self.request.user not in conversation.participants.all():
             raise PermissionDenied(
                 "You do not have permission to access this conversation.",
@@ -52,7 +52,6 @@ class MessageViewSet(viewsets.ModelViewSet):
         """
         Associates the message with the conversation from the URL.
         """
-        # Rename variable from 'conversation_pk' to 'conversation_id'
         conversation_id = self.kwargs['conversation_id']
         conversation = get_object_or_404(Conversation, pk=conversation_id)
         self.check_object_permissions(self.request, conversation)
