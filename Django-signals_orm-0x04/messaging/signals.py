@@ -18,7 +18,7 @@ def create_message_notification(sender, instance, created, **kwargs):
 @receiver(pre_save, sender=Message)
 def log_message_edit(sender, instance, **kwargs):
     """
-    Task 1: Before a message is updated, log its old content.
+    Task 1: Before a message is updated, log its old content and who edited it.
     """
     if instance.pk:  # Only run on updates, not creations
         try:
@@ -26,18 +26,18 @@ def log_message_edit(sender, instance, **kwargs):
             if original_message.content != instance.content:
                 MessageHistory.objects.create(
                     message=original_message,
-                    old_content=original_message.content
+                    old_content=original_message.content,
+                    # Save the user who made the edit (assuming it's the sender)
+                    edited_by=instance.sender
                 )
                 instance.edited = True
         except Message.DoesNotExist:
-            pass # Message is being created, do nothing.
-
+            pass
 @receiver(post_delete, sender=User)
 def delete_user_data(sender, instance, **kwargs):
     """
     Task 2: Confirms cleanup after a user is deleted.
-    Note: `on_delete=models.CASCADE` in the models already handles the deletion.
-    This signal is for demonstration or for adding extra logic like logging.
+    Note: `on_delete=models.CASCADE` already handles this.
     """
     print(f"User {instance.username} has been deleted. "
           f"Their associated data was removed via CASCADE settings.")
