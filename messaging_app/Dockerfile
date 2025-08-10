@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code into the container
 COPY . .
 
-# Expose the port the app runs on
+# Expose the port the app runs on.
+# The port mapping is handled by docker-compose, not with "-p" here.
 EXPOSE 8000
 
 # Command to run the application using Gunicorn
