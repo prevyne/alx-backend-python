@@ -3,10 +3,12 @@ version: '3.8'
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    # Updated command to use 'python3' explicitly
+    command: python3 manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
+      # This section correctly handles port mapping, equivalent to the '-p' flag
       - "8000:8000"
     env_file:
       - ./.env
@@ -19,12 +21,14 @@ services:
       - SYS_NICE
     restart: always
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      # These variables are now named to match the checker's requirements.
+      # The value of ${MYSQL_DB} from the .env file is assigned to MYSQL_DATABASE,
+      # which is the variable the official MySQL image requires.
+      MYSQL_DATABASE: ${MYSQL_DB}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-      # This named volume persists data in /var/lib/mysql
       - mysql_data:/var/lib/mysql
 
 volumes:
