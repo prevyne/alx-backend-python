@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define your Docker Hub username and the credentials ID from Jenkins
+        DOCKERHUB_USERNAME = "your-dockerhub-username"
+        DOCKERHUB_CREDENTIALS = "dockerhub-credentials" // The ID you create in Jenkins
+    }
+
+    stages {
+        // --- Task 0 Stages ---
+        stage('Checkout Code') {
+            steps {
+                // Pulls the source code from your GitHub repository
+                git branch: 'main',
+                    credentialsId: 'github-credentials', // The ID you create in Jenkins for GitHub
+                    url: 'https://github.com/your-github-username/alx-backend-python.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                // Installs Python packages required by the Django app
+                sh 'pip install -r messaging_app/requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                // Runs tests using pytest and generates a JUnit XML report for Jenkins
+                // Ensure your Django settings are configured to connect to a test DB
+                sh 'cd messaging_app && pytest --junitxml=../reports/results.xml'
+            }
+        }
+
+        // --- Task 1 Stages ---
+        stage('Build Docker Image') {
+            steps {
+                // Builds the Docker image using the Dockerfile in the messaging_app directory
+                sh "docker build -t ${DOCKERHUB_USERNAME}/messaging-app:${BUILD_NUMBER} ./messaging_app"
+                sh "docker tag ${DOCKERHUB_USERNAME}/messaging-app:${BUILD_NUMBER} ${DOCKERHUB_USERNAME}/messaging-app:latest"
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                // Securely logs into Docker Hub using credentials stored in Jenkins
+                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USER')]) {
+                    sh "echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USER} --password-stdin"
+                    sh "docker push ${DOCKERHUB_USERNAME}/messaging-app:${BUILD_NUMBER}"
+                    sh "docker push ${DOCKERHUB_USERNAME}/messaging-app:latest"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // This block runs after all stages, regardless of success or failure
+            echo 'Pipeline finished.'
+            // Publishes the test results report to the Jenkins dashboard
+            junit 'reports/results.xml'
+            // Cleans up the workspace to save space
+            cleanWs()
+        }
+    }
+}
