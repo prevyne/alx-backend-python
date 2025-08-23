@@ -20,8 +20,8 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                // Installs Python packages required by the Django app
-                sh 'pip install -r messaging_app/requirements.txt'
+                // Installs Python packages required by the Django app using pip3
+                sh 'pip3 install -r messaging_app/requirements.txt'
             }
         }
 
